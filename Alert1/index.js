@@ -15,9 +15,16 @@ module.exports = async function (context, req) {
             "is_post_only": true
         }
         totalAmount = totalAmount * 0.995
-        const price1 = price - 891.33
-        const price2 = price - 792.22
-        const price3 = price - 693.11
+//price='25016.13'
+//price='25065.57'
+//price1 = (price - 891.33).toFixed(2)
+//price3 = (price-891.1).toFixed(2)
+//console.log(price1)
+//console.log(price3)
+        //price = parseFloat(price).toFixed(2)
+        const price1 = (price - 891.33).toFixed(2)
+        const price2 = (price - 792.2).toFixed(2)
+        const price3 = (price - 693.1).toFixed(2)
         const units1 = Math.trunc(totalAmount / 3 / price1 * 1000) / 1000
         const units2 = Math.trunc(totalAmount / 3 / price2 * 1000) / 1000
         const units3 = Math.trunc(totalAmount / 3 / price3 * 1000) / 1000
