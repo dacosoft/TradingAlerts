@@ -58,7 +58,7 @@ module.exports = async function (context, req) {
         'NYSE-WMT',
         'NASDAQ-AAPL'
     ];
-    const tickers = ['AAPL', 'ACN'];
+    const tickers = ['AAPL', 'ACN','WMT'];
     const relevance = parseFloat(req.query.relevance || (req.body && req.body.relevance) || "0.5");
     const duration = parseFloat(req.query.duration || (req.body && req.body.duration) || "0");
     // https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers=ADBE&apikey=ZUBZVOOY7AA13CYK
@@ -88,6 +88,7 @@ module.exports = async function (context, req) {
             res = {
                 ticker: ticker,
                 sentiment: weighted_average.toFixed(6),
+                sentiments: sentiments.length
             }
           return res;
            //return ticker;
