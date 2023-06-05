@@ -2,17 +2,17 @@ const axios = require('axios');
 
 const flattenObject = (obj) => {
     const flattened = {}
-  
+
     Object.keys(obj).forEach((key) => {
-      const value = obj[key]
-  
-      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-        Object.assign(flattened, flattenObject(value))
-      } else {
-        flattened[key] = value
-      }
+        const value = obj[key]
+
+        if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+            Object.assign(flattened, flattenObject(value))
+        } else {
+            flattened[key] = value
+        }
     })
-  
+
     return flattened
 }
 
@@ -58,7 +58,7 @@ module.exports = async function (context, req) {
         'NYSE-WMT',
         'NASDAQ-AAPL'
     ];
-    const tickers = ['AAPL', 'ACN','WMT'];
+    const tickers = ['AAPL', 'ACN', 'WMT'];
     const relevance = parseFloat(req.query.relevance || (req.body && req.body.relevance) || "0.5");
     const duration = parseFloat(req.query.duration || (req.body && req.body.duration) || "0");
     // https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers=ADBE&apikey=ZUBZVOOY7AA13CYK
@@ -67,31 +67,33 @@ module.exports = async function (context, req) {
 
 
     try {
-        resp = await Promise.all( tickers.map(async (ticker) => {
+        resp = await Promise.all(tickers.map(async (ticker) => {
 
             const response = await axios.get(`https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers=${ticker}&apikey=${ApiKey}`)
             context.log(`statusCode: ${response.statusCode}`);
             //context.log(JSON.stringify(response.data));
-            if (!response.data.feed) 
-                throw new Error(JSON.stringify(response.data));  
+            if (!response.data.feed)
+                throw new Error(JSON.stringify(response.data));
 
-            sentiments = response.data.feed.map(current => flattenObject({time_published: current.time_published, sentiment :current.ticker_sentiment.find(element => element.ticker == ticker)}))
-            if (duration>0){
+            sentiments = response.data.feed.map(current => flattenObject({ time_published: current.time_published, sentiment: current.ticker_sentiment.find(element => element.ticker == ticker) }))
+            if (duration > 0) {
                 var d = new Date();
                 d.setDate(d.getDate() - duration);
                 const min_time_published = d.toISOString().split('.')[0].replace(/[^T0-9]/g, "");
-                sentiments = sentiments.filter( ({time_published}) => time_published>min_time_published)
+                sentiments = sentiments.filter(({ time_published }) => time_published > min_time_published)
             }
-            if (relevance>0) sentiments = sentiments.filter( ({relevance_score}) => relevance_score>relevance)
-            weighted_average = sentiments.reduce( (accumulator, current) => accumulator + parseFloat(current.ticker_sentiment_score)*parseFloat(current.relevance_score),0)
-                                /sentiments.reduce((accumulator, current) => accumulator + parseFloat(current.relevance_score),0)
+            if (relevance > 0) sentiments = sentiments.filter(({ relevance_score }) => relevance_score > relevance)
+            sentiment_average = sentiments.reduce((accumulator, current) => accumulator + parseFloat(current.ticker_sentiment_score) * parseFloat(current.relevance_score), 0)
+                / sentiments.reduce((accumulator, current) => accumulator + parseFloat(current.relevance_score), 0);
+            relevance_average = sentiments.reduce((accumulator, current) => accumulator + parseFloat(current.relevance_score), 0) / sentiments.length;
             res = {
                 ticker: ticker,
-                sentiment: weighted_average.toFixed(6),
-                sentiments: sentiments.length
+                sentiment_count: sentiments.length,
+                sentiment_average: sentiment_average.toFixed(6),
+                relevance_average: relevance_average.toFixed(6),
             }
-          return res;
-           //return ticker;
+            return res;
+            //return ticker;
         })
         );
 
